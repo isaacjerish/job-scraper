@@ -12,8 +12,11 @@ def scrape_adzuna(app_id, api_key):
         api_key (str): Your Adzuna API Key.
 
     Returns:
-        list: A list of job dictionaries found from the API call. hi
+        list: A list of job dictionaries found from the API call.
     """
+    # This print statement is a unique marker to prove this new version of the code is running.
+    print("--- RUNNING ADZUNA SCRAPER V2 (with max_days_old) ---")
+
     all_jobs = []
 
     # Keywords to search for. Adzuna is smart about handling these.
