@@ -6,6 +6,7 @@ import requests
 def scrape_adzuna(app_id, api_key):
     """
     Scrapes the Adzuna API specifically for internships based on keywords.
+    This version has the 3-day limit removed for broader testing.
 
     Args:
         app_id (str): Your Adzuna Application ID.
@@ -14,6 +15,8 @@ def scrape_adzuna(app_id, api_key):
     Returns:
         list: A list of job dictionaries found from the API call.
     """
+    print("--- DEBUG: Running Adzuna scraper with WIDENED search (no day limit). ---")
+
     all_jobs = []
 
     keywords = [
@@ -41,9 +44,9 @@ def scrape_adzuna(app_id, api_key):
         "results_per_page": 50,
         "what_or": " ".join(keywords),
         "sort_by": "date",
-        "max_days_old": 3,
-        "contract_time": "intern",  # <-- THE BEST WAY TO FILTER FOR INTERNSHIPS
+        "contract_time": "intern",  # Still filtering for internships
         "content-type": "application/json",
+        # The 'max_days_old' parameter has been removed for this test.
     }
 
     try:
