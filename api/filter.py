@@ -34,6 +34,7 @@ def filter_jobs(jobs):
         "cpu",
         "gpu",
         "compiler",
+        "electrical engineer",
         "operating system",
     ]
 

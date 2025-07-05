@@ -10,7 +10,9 @@ from scrapers.jsearch_scraper import scrape_jsearch
 
 # Import our helper functions
 from api.filter import filter_jobs
-from api.notify import send_to_discord
+
+# We now import both notification functions
+from api.notify import send_to_discord, send_status_update
 
 # --- Get API Keys and Webhook from Environment Variables ---
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
@@ -39,16 +41,7 @@ class handler(BaseHTTPRequestHandler):
             return
 
         all_jobs = scrape_jsearch(JSEARCH_API_KEY)
-
-        if not all_jobs:
-            print("No jobs found from JSearch. Exiting.")
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(
-                json.dumps({"status": "success", "found_jobs": 0}).encode("utf-8")
-            )
-            return
+        total_jobs_from_api = len(all_jobs)
 
         # --- 2. Filter out jobs we've already seen ---
         new_unseen_jobs = []
@@ -62,38 +55,42 @@ class handler(BaseHTTPRequestHandler):
                 if not redis.exists(job_url):
                     new_unseen_jobs.append(job)
         else:
-            # If DB is not connected, treat all jobs as new (for debugging)
+            # If DB is not connected, treat all jobs as new
             new_unseen_jobs = all_jobs
 
-        print(f"Found {len(new_unseen_jobs)} new, unseen jobs.")
+        new_unseen_count = len(new_unseen_jobs)
+        print(f"Found {new_unseen_count} new, unseen jobs.")
 
         # --- 3. Apply our custom quality filter ---
         final_filtered_jobs = filter_jobs(new_unseen_jobs)
+        final_filtered_count = len(final_filtered_jobs)
 
-        print(
-            f"Found {len(final_filtered_jobs)} relevant new jobs after final filtering."
-        )
+        print(f"Found {final_filtered_count} relevant new jobs after final filtering.")
 
-        # --- 4. Notify and update the database for new jobs ---
+        # --- 4. Notify about new jobs (if any) and update database ---
         if final_filtered_jobs and DISCORD_WEBHOOK_URL:
             send_to_discord(DISCORD_WEBHOOK_URL, final_filtered_jobs)
 
             if redis:  # Only update the database if it's connected
-                print(
-                    f"Adding {len(final_filtered_jobs)} new job URLs to the database..."
-                )
+                print(f"Adding {final_filtered_count} new job URLs to the database...")
                 for job in final_filtered_jobs:
-                    # .set() with 'ex' sets the key with an expiration in seconds
-                    redis.set(
-                        job["url"], "seen", ex=2592000
-                    )  # 2592000 seconds = 30 days
+                    redis.set(job["url"], "seen", ex=2592000)  # 30 days
 
-        # Respond to the HTTP request
+        # --- 5. ALWAYS send a status update message ---
+        stats = {
+            "total_found": total_jobs_from_api,
+            "new_unseen": new_unseen_count,
+            "final_filtered": final_filtered_count,
+        }
+        if DISCORD_WEBHOOK_URL:
+            send_status_update(DISCORD_WEBHOOK_URL, stats)
+
+        # --- 6. Respond to the HTTP request ---
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(
             json.dumps(
-                {"status": "success", "found_jobs": len(final_filtered_jobs)}
+                {"status": "success", "found_jobs": final_filtered_count}
             ).encode("utf-8")
         )
