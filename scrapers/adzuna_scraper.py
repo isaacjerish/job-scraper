@@ -34,20 +34,18 @@ def scrape_adzuna(app_id, api_key):
         "low level software",
     ]
 
-    # --- Corrected URL Construction ---
     # Base URL for the Adzuna API endpoint
     base_url = "http://api.adzuna.com/v1/api/jobs/us/search/1"
 
-    # Parameters for the API request. Using a dictionary is cleaner and safer,
-    # as the 'requests' library handles URL encoding automatically.
-    # You can change 'us' to 'gb' (UK), 'ca' (Canada), etc.
+    # Parameters for the API request.
     params = {
         "app_id": app_id,
         "app_key": api_key,
         "results_per_page": 50,
-        "what_or": " ".join(keywords),  # Join keywords with a space for the query
-        "what_and": "internship intern co-op",  # Ensure it's an internship/co-op
+        "what_or": " ".join(keywords),
+        "what_and": "internship intern co-op",
         "sort_by": "date",
+        "max_days_old": 3,  # <-- THIS IS THE NEW LINE
         "content-type": "application/json",
     }
 
@@ -66,9 +64,7 @@ def scrape_adzuna(app_id, api_key):
                     {
                         "title": job.get("title"),
                         "location": job.get("location", {}).get("display_name", "N/A"),
-                        "url": job.get(
-                            "redirect_url"
-                        ),  # Adzuna provides a redirect URL
+                        "url": job.get("redirect_url"),
                         "company": job.get("company", {}).get("display_name", "N/A"),
                     }
                 )
