@@ -15,7 +15,7 @@ def scrape_adzuna(app_id, api_key):
     Returns:
         list: A list of job dictionaries found from the API call.
     """
-    print("--- DEBUG: Running Adzuna scraper with WIDENED search (no day limit). ---")
+    print("--- DEBUG: Running Adzuna scraper V3 (content-type fix). ---")
 
     all_jobs = []
 
@@ -45,8 +45,7 @@ def scrape_adzuna(app_id, api_key):
         "what_or": " ".join(keywords),
         "sort_by": "date",
         "contract_time": "intern",  # Still filtering for internships
-        "content-type": "application/json",
-        # The 'max_days_old' parameter has been removed for this test.
+        # The 'content-type' parameter has been removed as it was causing the 400 error.
     }
 
     try:
@@ -66,6 +65,7 @@ def scrape_adzuna(app_id, api_key):
                     }
                 )
         else:
+            # This will now show a proper JSON error from Adzuna if there is one.
             print(f"Error from Adzuna API: {response.status_code} - {response.text}")
 
     except requests.exceptions.RequestException as e:
