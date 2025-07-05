@@ -4,16 +4,8 @@
 def filter_jobs(jobs):
     """
     Filters a list of job dictionaries based on predefined keywords.
-
-    Args:
-        jobs (list): A list of job dictionaries, where each dictionary
-                     is expected to have a 'title' key.
-
-    Returns:
-        list: A new list containing only the jobs that match the criteria.
+    This acts as a final quality check.
     """
-    # Keywords for roles you ARE interested in.
-    # These are not case-sensitive.
     positive_keywords = [
         "embedded",
         "firmware",
@@ -37,8 +29,7 @@ def filter_jobs(jobs):
         "mcu",
     ]
 
-    # Keywords for roles you ARE NOT interested in.
-    # This helps eliminate common false positives.
+    # Added more negative keywords to filter out senior/unrelated roles
     negative_keywords = [
         "frontend",
         "front-end",
@@ -54,30 +45,36 @@ def filter_jobs(jobs):
         "vue",
         "fullstack",
         "full-stack",
+        "senior",
+        "sr.",
+        "lead",
+        "staff",
+        "principal",
+        "manager",
+        "phd",
     ]
 
     filtered_jobs = []
     for job in jobs:
-        # Ensure the job has a title, otherwise skip it.
         if not job.get("title"):
             continue
 
         title_lower = job["title"].lower()
-        description_lower = job.get(
-            "description", ""
-        ).lower()  # Also check description if available
-        full_text = title_lower + " " + description_lower
 
-        # --- Filtering Logic ---
+        # Ensure the title explicitly says "intern" or "co-op"
+        if (
+            "intern" not in title_lower
+            and "co-op" not in title_lower
+            and "coop" not in title_lower
+        ):
+            continue
 
-        # 1. Check for negative keywords first to quickly eliminate irrelevant jobs.
-        if any(neg_keyword in full_text for neg_keyword in negative_keywords):
-            continue  # Skip to the next job if a negative keyword is found
+        # Check for negative keywords
+        if any(neg_keyword in title_lower for neg_keyword in negative_keywords):
+            continue
 
-        # 2. If no negative keywords are found, check for positive keywords.
-        if any(pos_keyword in full_text for pos_keyword in positive_keywords):
-            filtered_jobs.append(
-                job
-            )  # Add the job if it contains at least one positive keyword
+        # Check for positive keywords
+        if any(pos_keyword in title_lower for pos_keyword in positive_keywords):
+            filtered_jobs.append(job)
 
     return filtered_jobs
