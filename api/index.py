@@ -25,18 +25,26 @@ class handler(BaseHTTPRequestHandler):
         if ADZUNA_APP_ID and ADZUNA_API_KEY:
             print("Starting interest-based job search with Adzuna...")
             all_jobs = scrape_adzuna(ADZUNA_APP_ID, ADZUNA_API_KEY)
-            print(f"Found {len(all_jobs)} potential jobs from Adzuna.")
+
+            # --- NEW DEBUGGING STATEMENTS ---
+            print(
+                f"--- DEBUG: Found {len(all_jobs)} jobs from Adzuna BEFORE filtering. ---"
+            )
+            if all_jobs:
+                print("--- DEBUG: First 5 job titles from Adzuna: ---")
+                for i, job in enumerate(all_jobs[:5]):
+                    print(f"  {i + 1}: {job.get('title')}")
+            # --- END DEBUGGING STATEMENTS ---
+
         else:
             print("Adzuna credentials not found. Cannot perform search.")
 
         # --- Filtering and Notification ---
-        # Our existing filter will now work on this much smaller, more relevant list
         final_filtered_jobs = filter_jobs(all_jobs)
 
         print(f"Found {len(final_filtered_jobs)} jobs after final filtering.")
 
         if final_filtered_jobs and DISCORD_WEBHOOK_URL:
-            # The notifier will send the jobs in batches of 10
             send_to_discord(DISCORD_WEBHOOK_URL, final_filtered_jobs)
 
         # Respond to the HTTP request
