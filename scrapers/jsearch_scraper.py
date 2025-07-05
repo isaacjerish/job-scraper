@@ -5,7 +5,8 @@ import requests
 
 def scrape_jsearch(api_key):
     """
-    Scrapes the JSearch API for jobs based on a set of keywords.
+    Scrapes the JSearch API for jobs based on a set of keywords,
+    prioritizing the most recent listings.
 
     Args:
         api_key (str): Your JSearch API Key from RapidAPI.
@@ -13,13 +14,14 @@ def scrape_jsearch(api_key):
     Returns:
         list: A list of job dictionaries found from the API call.
     """
-    print("--- DEBUG: Running JSearch Scraper V2 (Co-op search included) ---")
+    print("--- DEBUG: Running JSearch Scraper V3 (Recency Fix) ---")
     all_jobs = []
 
-    # Updated query to explicitly include "co-op"
+    # Query remains broad to catch all relevant titles
     query = (
         '("embedded systems" OR "firmware" OR "rtos" OR "c++" OR "systems programming" '
-        'OR "device drivers" OR "kernel" OR "verilog" OR "vlsi" OR "fpga" OR "asic") '
+        'OR "device drivers" OR "kernel" OR "verilog" OR "vlsi" OR "fpga" OR "asic" '
+        'OR "soc" OR "computer architecture" OR "cpu" OR "gpu" OR "compiler" OR "operating system") '
         "(internship OR co-op)"
     )
 
@@ -29,9 +31,8 @@ def scrape_jsearch(api_key):
         "query": query,
         "page": "1",
         "num_pages": "1",
-        # JSearch uses 'INTERN' and 'CONTRACTOR' to find these roles
         "employment_types": "INTERN,CONTRACTOR",
-        "date_posted": "week",
+        "date_posted": "3days",  # <-- Stricter filter for only recent jobs
     }
 
     headers = {"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": "jsearch.p.rapidapi.com"}
@@ -44,11 +45,12 @@ def scrape_jsearch(api_key):
             jobs = data.get("data", [])
 
             if not jobs:
-                print("--- DEBUG: JSearch API returned 0 jobs. ---")
+                print(
+                    "--- DEBUG: JSearch API returned 0 jobs with the '3days' filter. ---"
+                )
                 return []
 
             for job in jobs:
-                # Format the job data to be consistent with our application
                 all_jobs.append(
                     {
                         "title": job.get("job_title"),
