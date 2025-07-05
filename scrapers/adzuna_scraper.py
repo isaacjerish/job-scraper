@@ -15,26 +15,12 @@ def scrape_adzuna(app_id, api_key):
     Returns:
         list: A list of job dictionaries found from the API call.
     """
-    print("--- DEBUG: Running Adzuna scraper V3 (content-type fix). ---")
+    print("--- DEBUG: Running Adzuna scraper V4 (using 'what' parameter). ---")
 
     all_jobs = []
 
-    keywords = [
-        "embedded systems",
-        "firmware",
-        "rtos",
-        "c++",
-        "c language",
-        "systems programming",
-        "device drivers",
-        "kernel",
-        "verilog",
-        "systemverilog",
-        "vlsi",
-        "fpga",
-        "asic",
-        "low level software",
-    ]
+    # We will combine the keywords into a single string for the 'what' parameter
+    keywords = "embedded systems firmware rtos c++ systems programming device drivers kernel verilog vlsi fpga asic"
 
     base_url = "http://api.adzuna.com/v1/api/jobs/us/search/1"
 
@@ -42,10 +28,9 @@ def scrape_adzuna(app_id, api_key):
         "app_id": app_id,
         "app_key": api_key,
         "results_per_page": 50,
-        "what_or": " ".join(keywords),
+        "what": keywords,  # Using the more standard 'what' parameter instead of 'what_or'
         "sort_by": "date",
         "contract_time": "intern",  # Still filtering for internships
-        # The 'content-type' parameter has been removed as it was causing the 400 error.
     }
 
     try:
