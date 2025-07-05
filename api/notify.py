@@ -3,15 +3,32 @@
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import time
 
+# List of top-tier companies to highlight in notifications
+BIG_TECH_COMPANIES = [
+    "apple",
+    "google",
+    "meta",
+    "amazon",
+    "microsoft",
+    "netflix",
+    "nvidia",
+    "amd",
+    "intel",
+    "qualcomm",
+    "tesla",
+    "spacex",
+    "openai",
+    "anthropic",
+    "databricks",
+    "snowflake",
+    "cloudflare",
+]
+
 
 def send_to_discord(webhook_url, jobs):
     """
     Sends a list of jobs to a Discord channel using a webhook.
-    Handles Discord's 10-embed limit by sending jobs in batches.
-
-    Args:
-        webhook_url (str): The URL of the Discord webhook.
-        jobs (list): A list of filtered job dictionaries to be sent.
+    Highlights jobs from a predefined list of top companies.
     """
     if not jobs:
         print("No new jobs to notify.")
@@ -19,19 +36,27 @@ def send_to_discord(webhook_url, jobs):
 
     print(f"Sending {len(jobs)} new jobs to Discord in batches...")
 
-    # Split the jobs list into chunks of 10
     job_chunks = [jobs[i : i + 10] for i in range(0, len(jobs), 10)]
 
     for chunk in job_chunks:
-        # Create a new webhook object for each batch of 10 jobs
         webhook = DiscordWebhook(url=webhook_url)
 
         for job in chunk:
-            # Create an 'embed' for each job.
+            company_name = job.get("company", "").lower()
+            is_big_tech = any(tech_co in company_name for tech_co in BIG_TECH_COMPANIES)
+
+            # Set a different color and title for highlighted companies
+            if is_big_tech:
+                embed_color = "FFD700"  # Gold color
+                embed_title = f"⭐ {job.get('title', 'No Title')}"
+            else:
+                embed_color = "03b2f8"  # Standard blue color
+                embed_title = job.get("title", "No Title")
+
             embed = DiscordEmbed(
-                title=job.get("title", "No Title"),
+                title=embed_title,
                 description=f"**Location:** {job.get('location', 'N/A')}",
-                color="03b2f8",
+                color=embed_color,
             )
             embed.set_author(name="New Internship/Co-op Found!")
 
@@ -42,25 +67,21 @@ def send_to_discord(webhook_url, jobs):
             else:
                 embed.add_embed_field(name="Apply Now", value="URL not found")
 
-            # Add company name if available
             if job.get("company"):
                 embed.add_embed_field(name="Company", value=job["company"])
 
             embed.set_timestamp()
             webhook.add_embed(embed)
 
-        # Execute the webhook to send the current batch to Discord.
         try:
             response = webhook.execute()
             if response.status_code in [200, 204]:
                 print(f"Successfully sent a batch of {len(chunk)} jobs to Discord.")
             else:
-                # This will print the specific error if a batch fails
                 print(
                     f"Error sending batch to Discord: {response.status_code}, {response.content}"
                 )
 
-            # Wait for a second between sending batches to be nice to Discord's API
             time.sleep(1)
 
         except Exception as e:

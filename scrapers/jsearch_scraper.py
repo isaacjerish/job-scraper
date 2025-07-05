@@ -13,15 +13,14 @@ def scrape_jsearch(api_key):
     Returns:
         list: A list of job dictionaries found from the API call.
     """
-    print("--- DEBUG: Running JSearch Scraper V1 ---")
+    print("--- DEBUG: Running JSearch Scraper V2 (Co-op search included) ---")
     all_jobs = []
 
-    # JSearch is powerful and can handle complex queries well.
-    # We are searching for internships posted in the last week to ensure we get results.
+    # Updated query to explicitly include "co-op"
     query = (
         '("embedded systems" OR "firmware" OR "rtos" OR "c++" OR "systems programming" '
         'OR "device drivers" OR "kernel" OR "verilog" OR "vlsi" OR "fpga" OR "asic") '
-        "internship"
+        "(internship OR co-op)"
     )
 
     url = "https://jsearch.p.rapidapi.com/search"
@@ -30,8 +29,9 @@ def scrape_jsearch(api_key):
         "query": query,
         "page": "1",
         "num_pages": "1",
-        "employment_types": "INTERN",
-        "date_posted": "week",  # Broaden to 'week' to ensure we get results first
+        # JSearch uses 'INTERN' and 'CONTRACTOR' to find these roles
+        "employment_types": "INTERN,CONTRACTOR",
+        "date_posted": "week",
     }
 
     headers = {"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": "jsearch.p.rapidapi.com"}

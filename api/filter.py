@@ -6,6 +6,7 @@ def filter_jobs(jobs):
     Filters a list of job dictionaries based on predefined keywords.
     This acts as a final quality check.
     """
+    # Expanded list of keywords to catch more relevant jobs
     positive_keywords = [
         "embedded",
         "firmware",
@@ -27,6 +28,13 @@ def filter_jobs(jobs):
         "bootloader",
         "microcontroller",
         "mcu",
+        "soc",
+        "system on chip",
+        "computer architecture",
+        "cpu",
+        "gpu",
+        "compiler",
+        "operating system",
     ]
 
     # Negative keywords to filter out senior or unrelated roles.
@@ -60,9 +68,6 @@ def filter_jobs(jobs):
             continue
 
         title_lower = job["title"].lower()
-
-        # The strict check for "intern" has been removed. We now trust the API
-        # to send us internships and use this filter as a final quality pass.
 
         # 1. Check for negative keywords to remove obvious mismatches.
         if any(neg_keyword in title_lower for neg_keyword in negative_keywords):
