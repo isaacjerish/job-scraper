@@ -5,6 +5,7 @@ import json
 import os
 from upstash_redis import Redis
 import time
+from datetime import datetime  # Import datetime to help with debugging
 
 # Import the JSearch scraper
 from scrapers.jsearch_scraper import scrape_jsearch
@@ -30,15 +31,33 @@ else:
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        # --- 1. Scrape for jobs ---
         if not JSEARCH_API_KEY:
-            # Handle missing API key
             self.send_response(500)
             self.end_headers()
             self.wfile.write(b"JSearch API Key not found.")
             return
 
         all_jobs = scrape_jsearch(JSEARCH_API_KEY)
+
+        # --- NEW DEBUGGING BLOCK ---
+        print(f"--- DEBUG: JSearch API returned {len(all_jobs)} total jobs. ---")
+        if all_jobs:
+            print("--- DEBUG: Raw data from first 3 jobs: ---")
+            for i, job in enumerate(all_jobs[:3]):
+                posted_at_timestamp = job.get("posted_at")
+                # Convert timestamp to human-readable date for logging
+                if posted_at_timestamp:
+                    posted_at_date = datetime.fromtimestamp(
+                        posted_at_timestamp
+                    ).strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    posted_at_date = "Not Available"
+
+                print(
+                    f"  Job {i + 1}: '{job.get('title')}' - Posted At: {posted_at_date} (Timestamp: {posted_at_timestamp})"
+                )
+            print("-----------------------------------------")
+        # --- END DEBUGGING BLOCK ---
 
         # --- 2. Manually filter for jobs posted in the last 3 days ---
         three_days_ago_timestamp = int(time.time()) - (3 * 24 * 60 * 60)
@@ -77,7 +96,7 @@ class handler(BaseHTTPRequestHandler):
                     f"Adding {len(final_filtered_jobs)} new job URLs to the database..."
                 )
                 for job in final_filtered_jobs:
-                    redis.set(job["url"], "seen", ex=2592000)  # 30-day expiration
+                    redis.set(job["url"], "seen", ex=2592000)
 
         # --- 6. Respond to the HTTP request ---
         self.send_response(200)
