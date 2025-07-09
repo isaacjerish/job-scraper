@@ -1,5 +1,3 @@
-# api/notify.py
-
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import time
 
@@ -26,10 +24,6 @@ BIG_TECH_COMPANIES = [
 
 
 def send_to_discord(webhook_url, jobs):
-    """
-    Sends a list of jobs to a Discord channel using a webhook.
-    Highlights jobs from a predefined list of top companies.
-    """
     if not jobs:
         return
 
@@ -45,10 +39,10 @@ def send_to_discord(webhook_url, jobs):
             is_big_tech = any(tech_co in company_name for tech_co in BIG_TECH_COMPANIES)
 
             if is_big_tech:
-                embed_color = "FFD700"  # Gold
+                embed_color = "FFD700"
                 embed_title = f"⭐ {job.get('title', 'No Title')}"
             else:
-                embed_color = "03b2f8"  # Blue
+                embed_color = "03b2f8"
                 embed_title = job.get("title", "No Title")
 
             embed = DiscordEmbed(

@@ -1,24 +1,18 @@
-# api/index.py
-
 from http.server import BaseHTTPRequestHandler
 import json
 import os
 from upstash_redis import Redis
 import time
-from datetime import datetime  # Import datetime to help with debugging
+from datetime import datetime
 
-# Import the JSearch scraper
 from scrapers.jsearch_scraper import scrape_jsearch
 
-# Import our helper functions
 from api.filter import filter_jobs
 from api.notify import send_to_discord
 
-# --- Get API Keys and Webhook from Environment Variables ---
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 JSEARCH_API_KEY = os.environ.get("JSEARCH_API_KEY")
 
-# --- Instantiate the Upstash Redis client ---
 KV_URL = os.environ.get("KV_REST_API_URL")
 KV_TOKEN = os.environ.get("KV_REST_API_TOKEN")
 
@@ -37,16 +31,13 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(b"JSearch API Key not found.")
             return
 
-        # 1. Scrape for jobs
         all_jobs = scrape_jsearch(JSEARCH_API_KEY)
 
-        # --- DEBUGGING BLOCK to inspect raw API data ---
         print(f"--- DEBUG: JSearch API returned {len(all_jobs)} total jobs. ---")
         if all_jobs:
             print("--- DEBUG: Raw data from first 5 jobs: ---")
             for i, job in enumerate(all_jobs[:5]):
                 posted_at_timestamp = job.get("posted_at")
-                # Convert timestamp to human-readable date for logging hi
                 if posted_at_timestamp:
                     posted_at_date = datetime.fromtimestamp(
                         posted_at_timestamp
@@ -58,9 +49,7 @@ class handler(BaseHTTPRequestHandler):
                     f"  Job {i + 1}: '{job.get('title')}' - Posted At: {posted_at_date} (Timestamp: {posted_at_timestamp})"
                 )
             print("-----------------------------------------")
-        # --- END DEBUGGING BLOCK ---
 
-        # 2. Manually filter for jobs posted in the last 3 days
         three_days_ago_timestamp = int(time.time()) - (3 * 24 * 60 * 60)
         recent_jobs = []
         for job in all_jobs:
@@ -69,7 +58,6 @@ class handler(BaseHTTPRequestHandler):
 
         print(f"Found {len(recent_jobs)} jobs posted in the last 3 days.")
 
-        # 3. Filter out jobs we've already seen
         new_unseen_jobs = []
         if redis:
             for job in recent_jobs:
@@ -81,14 +69,12 @@ class handler(BaseHTTPRequestHandler):
 
         print(f"Found {len(new_unseen_jobs)} new, unseen jobs.")
 
-        # 4. Apply our custom quality filter
         final_filtered_jobs = filter_jobs(new_unseen_jobs)
 
         print(
             f"Found {len(final_filtered_jobs)} relevant new jobs after final filtering."
         )
 
-        # 5. Notify and update the database
         if final_filtered_jobs and DISCORD_WEBHOOK_URL:
             send_to_discord(DISCORD_WEBHOOK_URL, final_filtered_jobs)
 
@@ -99,7 +85,6 @@ class handler(BaseHTTPRequestHandler):
                 for job in final_filtered_jobs:
                     redis.set(job["url"], "seen", ex=2592000)  # 30-day expiration
 
-        # 6. Respond to the HTTP request
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()

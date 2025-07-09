@@ -1,12 +1,4 @@
-# api/filter.py
-
-
 def filter_jobs(jobs):
-    """
-    Filters a list of job dictionaries based on predefined keywords.
-    This acts as a final quality check.
-    """
-    # Expanded list of keywords to catch more relevant jobs
     positive_keywords = [
         "embedded",
         "firmware",

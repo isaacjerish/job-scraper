@@ -1,13 +1,7 @@
-# scrapers/jsearch_scraper.py
-
 import requests
 
 
 def scrape_jsearch(api_key):
-    """
-    Scrapes the JSearch API for jobs based on a set of keywords.
-    Now also fetches the timestamp for manual filtering.
-    """
     all_jobs = []
 
     query = (
@@ -24,7 +18,7 @@ def scrape_jsearch(api_key):
         "page": "1",
         "num_pages": "1",
         "employment_types": "INTERN,CONTRACTOR",
-        "date_posted": "week",  # Get jobs from the last week to ensure we have a good pool
+        "date_posted": "week",
     }
 
     headers = {"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": "jsearch.p.rapidapi.com"}
@@ -40,7 +34,6 @@ def scrape_jsearch(api_key):
                 return []
 
             for job in jobs:
-                # Add the timestamp to the dictionary we create
                 all_jobs.append(
                     {
                         "title": job.get("job_title"),
@@ -49,7 +42,7 @@ def scrape_jsearch(api_key):
                         ),
                         "url": job.get("job_apply_link"),
                         "company": job.get("employer_name"),
-                        "posted_at": job.get("job_posted_at_timestamp"),  # <-- NEW
+                        "posted_at": job.get("job_posted_at_timestamp"),
                     }
                 )
         else:
