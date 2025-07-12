@@ -28,9 +28,10 @@ def filter_jobs(jobs):
         "compiler",
         "electrical engineer",
         "operating system",
+        "computer engineer",
+        "software engineer",
     ]
 
-    # Negative keywords to filter out senior or unrelated roles.
     negative_keywords = [
         "frontend",
         "front-end",
@@ -62,11 +63,9 @@ def filter_jobs(jobs):
 
         title_lower = job["title"].lower()
 
-        # 1. Check for negative keywords to remove obvious mismatches.
         if any(neg_keyword in title_lower for neg_keyword in negative_keywords):
             continue
 
-        # 2. Check for positive keywords to ensure relevance to your interests.
         if any(pos_keyword in title_lower for pos_keyword in positive_keywords):
             filtered_jobs.append(job)
 
