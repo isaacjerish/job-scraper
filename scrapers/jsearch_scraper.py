@@ -1,15 +1,11 @@
+# scrapers/jsearch_scraper.py
+
 import requests
 
 
 def scrape_jsearch(api_key):
     all_jobs = []
-
-    query = (
-        '("embedded systems" OR "firmware" OR "rtos" OR "c++" OR "systems programming" '
-        'OR "device drivers" OR "kernel" OR "verilog" OR "vlsi" OR "fpga" OR "asic" '
-        'OR "soc" OR "computer architecture" OR "cpu" OR "gpu" OR "compiler" OR "operating system") '
-        "(internship OR co-op)"
-    )
+    query = "embedded software engineering internship OR firmware engineering internship OR systems engineering internship or software engineering internship or electrical engineering internship"
 
     url = "https://jsearch.p.rapidapi.com/search"
 
