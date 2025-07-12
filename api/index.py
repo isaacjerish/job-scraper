@@ -32,6 +32,7 @@ class handler(BaseHTTPRequestHandler):
 
         all_jobs = scrape_jsearch(JSEARCH_API_KEY)
         total_from_api = len(all_jobs)
+        print(f"JSearch API returned {total_from_api} total jobs.")
 
         three_days_ago_timestamp = int(time.time()) - (3 * 24 * 60 * 60)
         recent_jobs = []
@@ -39,6 +40,7 @@ class handler(BaseHTTPRequestHandler):
             if job.get("posted_at") and job["posted_at"] > three_days_ago_timestamp:
                 recent_jobs.append(job)
         recent_count = len(recent_jobs)
+        print(f"Found {recent_count} jobs posted in the last 3 days.")
 
         new_unseen_jobs = []
         if redis:
@@ -49,9 +51,11 @@ class handler(BaseHTTPRequestHandler):
         else:
             new_unseen_jobs = recent_jobs
         new_unseen_count = len(new_unseen_jobs)
+        print(f"Found {new_unseen_count} new, unseen jobs.")
 
         final_filtered_jobs = filter_jobs(new_unseen_jobs)
         final_filtered_count = len(final_filtered_jobs)
+        print(f"Found {final_filtered_count} relevant new jobs after final filtering.")
 
         if final_filtered_jobs and DISCORD_WEBHOOK_URL:
             send_to_discord(DISCORD_WEBHOOK_URL, final_filtered_jobs)
