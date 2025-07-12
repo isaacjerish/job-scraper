@@ -16,7 +16,7 @@ def scrape_jsearch(api_key):
     querystring = {
         "query": query,
         "page": "1",
-        "num_pages": "1",
+        "num_pages": "5",
         "employment_types": "INTERN,CONTRACTOR",
         "date_posted": "month",
     }
