@@ -18,7 +18,7 @@ def scrape_jsearch(api_key):
         "page": "1",
         "num_pages": "1",
         "employment_types": "INTERN,CONTRACTOR",
-        "date_posted": "week",
+        "date_posted": "month",
     }
 
     headers = {"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": "jsearch.p.rapidapi.com"}
