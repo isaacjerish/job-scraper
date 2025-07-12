@@ -3,12 +3,11 @@ import json
 import os
 from upstash_redis import Redis
 import time
-from datetime import datetime
 
 from scrapers.jsearch_scraper import scrape_jsearch
 
 from api.filter import filter_jobs
-from api.notify import send_to_discord
+from api.notify import send_to_discord, send_daily_report
 
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 JSEARCH_API_KEY = os.environ.get("JSEARCH_API_KEY")
@@ -32,31 +31,14 @@ class handler(BaseHTTPRequestHandler):
             return
 
         all_jobs = scrape_jsearch(JSEARCH_API_KEY)
-
-        print(f"--- DEBUG: JSearch API returned {len(all_jobs)} total jobs. ---")
-        if all_jobs:
-            print("--- DEBUG: Raw data from first 5 jobs: ---")
-            for i, job in enumerate(all_jobs[:5]):
-                posted_at_timestamp = job.get("posted_at")
-                if posted_at_timestamp:
-                    posted_at_date = datetime.fromtimestamp(
-                        posted_at_timestamp
-                    ).strftime("%Y-%m-%d %H:%M:%S")
-                else:
-                    posted_at_date = "Not Available"
-
-                print(
-                    f"  Job {i + 1}: '{job.get('title')}' - Posted At: {posted_at_date} (Timestamp: {posted_at_timestamp})"
-                )
-            print("-----------------------------------------")
+        total_from_api = len(all_jobs)
 
         three_days_ago_timestamp = int(time.time()) - (3 * 24 * 60 * 60)
         recent_jobs = []
         for job in all_jobs:
             if job.get("posted_at") and job["posted_at"] > three_days_ago_timestamp:
                 recent_jobs.append(job)
-
-        print(f"Found {len(recent_jobs)} jobs posted in the last 3 days.")
+        recent_count = len(recent_jobs)
 
         new_unseen_jobs = []
         if redis:
@@ -66,30 +48,32 @@ class handler(BaseHTTPRequestHandler):
                     new_unseen_jobs.append(job)
         else:
             new_unseen_jobs = recent_jobs
-
-        print(f"Found {len(new_unseen_jobs)} new, unseen jobs.")
+        new_unseen_count = len(new_unseen_jobs)
 
         final_filtered_jobs = filter_jobs(new_unseen_jobs)
-
-        print(
-            f"Found {len(final_filtered_jobs)} relevant new jobs after final filtering."
-        )
+        final_filtered_count = len(final_filtered_jobs)
 
         if final_filtered_jobs and DISCORD_WEBHOOK_URL:
             send_to_discord(DISCORD_WEBHOOK_URL, final_filtered_jobs)
-
             if redis:
-                print(
-                    f"Adding {len(final_filtered_jobs)} new job URLs to the database..."
-                )
+                print(f"Adding {final_filtered_count} new job URLs to the database...")
                 for job in final_filtered_jobs:
-                    redis.set(job["url"], "seen", ex=2592000)  # 30-day expiration
+                    redis.set(job["url"], "seen", ex=2592000)
+
+        stats = {
+            "total_from_api": total_from_api,
+            "recent_count": recent_count,
+            "new_unseen_count": new_unseen_count,
+            "final_filtered": final_filtered_count,
+        }
+        if DISCORD_WEBHOOK_URL:
+            send_daily_report(DISCORD_WEBHOOK_URL, stats)
 
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(
             json.dumps(
-                {"status": "success", "found_jobs": len(final_filtered_jobs)}
+                {"status": "success", "found_jobs": final_filtered_count}
             ).encode("utf-8")
         )
