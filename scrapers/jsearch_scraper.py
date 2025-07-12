@@ -5,7 +5,8 @@ import requests
 
 def scrape_jsearch(api_key):
     all_jobs = []
-    query = "embedded software engineering internship OR firmware engineering internship OR systems engineering internship or software engineering internship or electrical engineering internship"
+
+    query = "engineer internship OR engineering internship"
 
     url = "https://jsearch.p.rapidapi.com/search"
 
